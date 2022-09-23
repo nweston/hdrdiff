@@ -10,8 +10,8 @@ ipython = "*"
 
 [packages]
 qt-py = "*"
-opencv-python = "*"
 pyside2 = "*"
+opencv-python-headless = "*"
 
 [requires]
 python_version = "3.8"
