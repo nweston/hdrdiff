@@ -23,6 +23,9 @@ class ImageView(qt.QGraphicsView):
         self.setBackgroundBrush(qt.Qt.gray)
         self.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+        self.setMouseTracking(True)
+
+        self._drag_state = None
 
     @property
     def _transform(self):
@@ -48,6 +51,18 @@ class ImageView(qt.QGraphicsView):
             center=(evt.x(), evt.y()),
             increment=evt.angleDelta().y() / 240.0,
         )
+
+    def mouseMoveEvent(self, evt):
+        if evt.buttons() == qt.Qt.LeftButton:
+            if self._drag_state is None:
+                self._drag_state = (self._transform, (evt.x(), evt.y()))
+                self.setCursor(qt.Qt.CursorShape.ClosedHandCursor)
+            else:
+                self._transform = transform.pan(*self._drag_state, (evt.x(), evt.y()))
+
+    def mouseReleaseEvent(self, evt):
+        self._drag_state = None
+        self.setCursor(qt.Qt.CursorShape.ArrowCursor)
 
     def reset_view(self):
         self._transform = transform.fit(dims(self._image), dims(self.sceneRect()))

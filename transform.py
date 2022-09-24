@@ -61,3 +61,9 @@ def zoom(xform, center, increment):
     c2 = qt.QTransform.fromTranslate(*center)
 
     return xform * c1 * s * c2
+
+
+def pan(xform, from_coords, to_coords):
+    return xform * qt.QTransform.fromTranslate(
+        *[f - t for t, f in zip(from_coords, to_coords)]
+    )
