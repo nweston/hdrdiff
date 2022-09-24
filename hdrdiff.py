@@ -39,7 +39,20 @@ class ImageView(qt.QGraphicsView):
             return
 
         self.setSceneRect(0, 0, self.width(), self.height())
+        self.reset_view()
+
+    def reset_view(self):
         self._transform = transform.fit(dims(self._image), dims(self.sceneRect()))
+
+    def zoom_in(self):
+        self._transform = transform.zoom(
+            self._transform, dims(self.sceneRect()), increment=0.5
+        )
+
+    def zoom_out(self):
+        self._transform = transform.zoom(
+            self._transform, dims(self.sceneRect()), increment=-0.5
+        )
 
 
 if __name__ == "__main__":
@@ -55,9 +68,22 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     window = qt.QWidget()
     view = ImageView(qimage, parent=window)
-
     HBox(window, children=[view])
 
-    window.showMaximized()
+    # Shortcuts
+    qt.QShortcut(
+        qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_Equal), window, activated=view.zoom_in
+    )
+    qt.QShortcut(
+        qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_Plus), window, activated=view.zoom_in
+    )
+    qt.QShortcut(
+        qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_Minus), window, activated=view.zoom_out
+    )
+    qt.QShortcut(
+        qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_0), window, activated=view.reset_view
+    )
 
+    # Run the app
+    window.showMaximized()
     app.exec_()

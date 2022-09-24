@@ -1,6 +1,6 @@
 import unittest
 import qt
-from transform import fit
+from transform import fit, scale_factor, zoom
 
 
 def do_fit(item, scene):
@@ -31,6 +31,19 @@ def centered(small_rect, big_rect):
         return sx0, margin, sx1, bh - margin
 
 
+def center(rect):
+    if isinstance(rect, qt.QRectF):
+        return rect.center().x(), rect.center().y()
+    else:
+        x0, y0, x1, y1 = rect
+        return (x1 - x0) * 0.5, (y1 - y0) * 0.5
+
+
+def map_inv(xform, *args):
+    inverse, _ = xform.inverted()
+    return inverse.map(*args)
+
+
 class TestFit(unittest.TestCase):
     def test_zoom_in_simple(self):
         xformed, scene = do_fit((100, 50), (250, 125))
@@ -55,3 +68,40 @@ class TestFit(unittest.TestCase):
     def test_zoom_out_ymargin(self):
         xformed, scene = do_fit((250, 100), (100, 50))
         self.assertEqual(xformed, centered(xformed, scene))
+
+
+class TestZoom(unittest.TestCase):
+    def test_scale_factor(self):
+        xform = qt.QTransform()
+        self.assertEqual(scale_factor(xform), 1.0)
+        self.assertEqual(scale_factor(zoom(xform, (0, 0), 0.5)), 1.5)
+        self.assertEqual(scale_factor(zoom(xform, (0, 0), 1)), 2)
+        self.assertEqual(scale_factor(zoom(xform, (0, 0), -1)), 0.5)
+        self.assertEqual(scale_factor(zoom(xform, (0, 0), -3)), 0.25)
+
+    def test_preserves_center(self):
+        item = (100, 50)
+        item_qrect = qt.QRectF(0, 0, *item)
+        view = (250, 125)
+        view_center = tuple(0.5 * i for i in view)
+        xform = fit(item, view)
+        self.assertEqual(center(xform.mapRect(item_qrect)), view_center)
+
+        # If the image is centered, it should stay centered
+        self.assertEqual(
+            center(zoom(xform, view, 0.5).mapRect(item_qrect)), view_center
+        )
+        self.assertEqual(center(zoom(xform, view, 2).mapRect(item_qrect)), view_center)
+        self.assertEqual(center(zoom(xform, view, -1).mapRect(item_qrect)), view_center)
+        self.assertEqual(center(zoom(xform, view, -3).mapRect(item_qrect)), view_center)
+
+        # If the image is not centered, then whatever point is at the
+        # center of the view should stay there, but the center of the
+        # image itself will change.
+        xform2 = xform * qt.QTransform.fromTranslate(10, 20)
+        current_center = map_inv(xform2, *view_center)
+
+        self.assertEqual(map_inv(zoom(xform2, view, 0.5), *view_center), current_center)
+        self.assertEqual(map_inv(zoom(xform2, view, 2), *view_center), current_center)
+        self.assertEqual(map_inv(zoom(xform2, view, -1), *view_center), current_center)
+        self.assertEqual(map_inv(zoom(xform2, view, -3), *view_center), current_center)
