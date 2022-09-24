@@ -3,7 +3,44 @@ import cv2
 import sys
 import qt
 import numpy
+import transform
 from layout import HBox
+
+
+def dims(obj):
+    """Return (width, height) tuple for object with width() and height() methods."""
+    return obj.width(), obj.height()
+
+
+class ImageView(qt.QGraphicsView):
+    def __init__(self, image, parent=None, **kwargs):
+        scene = qt.QGraphicsScene()
+        self._image = image
+        self._item = qt.QGraphicsPixmapItem(qt.QPixmap.fromImage(image))
+        scene.addItem(self._item)
+
+        super().__init__(scene=scene, parent=parent, **kwargs)
+        self.setBackgroundBrush(qt.Qt.gray)
+        self.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+        self.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
+
+    @property
+    def _transform(self):
+        return self._item.transform()
+
+    @_transform.setter
+    def _transform(self, t):
+        self._item.setTransform(t)
+
+    def resizeEvent(self, evt):
+        super().resizeEvent(evt)
+
+        if evt.spontaneous():
+            return
+
+        self.setSceneRect(0, 0, self.width(), self.height())
+        self._transform = transform.fit(dims(self._image), dims(self.sceneRect()))
+
 
 if __name__ == "__main__":
     img = cv2.imread(sys.argv[1], cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
@@ -17,11 +54,7 @@ if __name__ == "__main__":
 
     app = qt.QApplication([])
     window = qt.QWidget()
-    scene = qt.QGraphicsScene()
-    view = qt.QGraphicsView(scene, parent=window)
-    view.setBackgroundBrush(qt.Qt.gray)
-
-    scene.addItem(qt.QGraphicsPixmapItem(qt.QPixmap.fromImage(qimage)))
+    view = ImageView(qimage, parent=window)
 
     HBox(window, children=[view])
 
