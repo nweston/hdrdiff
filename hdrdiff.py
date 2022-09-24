@@ -41,17 +41,29 @@ class ImageView(qt.QGraphicsView):
         self.setSceneRect(0, 0, self.width(), self.height())
         self.reset_view()
 
+    def wheelEvent(self, evt):
+        # Delta of one wheel click is usually 120
+        self._transform = transform.zoom(
+            self._transform,
+            center=(evt.x(), evt.y()),
+            increment=evt.angleDelta().y() / 240.0,
+        )
+
     def reset_view(self):
         self._transform = transform.fit(dims(self._image), dims(self.sceneRect()))
 
     def zoom_in(self):
         self._transform = transform.zoom(
-            self._transform, dims(self.sceneRect()), increment=0.5
+            self._transform,
+            tuple(0.5 * i for i in dims(self.sceneRect())),
+            increment=0.5,
         )
 
     def zoom_out(self):
         self._transform = transform.zoom(
-            self._transform, dims(self.sceneRect()), increment=-0.5
+            self._transform,
+            tuple(0.5 * i for i in dims(self.sceneRect())),
+            increment=-0.5,
         )
 
 

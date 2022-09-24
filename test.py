@@ -79,7 +79,7 @@ class TestZoom(unittest.TestCase):
         self.assertEqual(scale_factor(zoom(xform, (0, 0), -1)), 0.5)
         self.assertEqual(scale_factor(zoom(xform, (0, 0), -3)), 0.25)
 
-    def test_preserves_center(self):
+    def test_center(self):
         item = (100, 50)
         item_qrect = qt.QRectF(0, 0, *item)
         view = (250, 125)
@@ -89,11 +89,17 @@ class TestZoom(unittest.TestCase):
 
         # If the image is centered, it should stay centered
         self.assertEqual(
-            center(zoom(xform, view, 0.5).mapRect(item_qrect)), view_center
+            center(zoom(xform, view_center, 0.5).mapRect(item_qrect)), view_center
         )
-        self.assertEqual(center(zoom(xform, view, 2).mapRect(item_qrect)), view_center)
-        self.assertEqual(center(zoom(xform, view, -1).mapRect(item_qrect)), view_center)
-        self.assertEqual(center(zoom(xform, view, -3).mapRect(item_qrect)), view_center)
+        self.assertEqual(
+            center(zoom(xform, view_center, 2).mapRect(item_qrect)), view_center
+        )
+        self.assertEqual(
+            center(zoom(xform, view_center, -1).mapRect(item_qrect)), view_center
+        )
+        self.assertEqual(
+            center(zoom(xform, view_center, -3).mapRect(item_qrect)), view_center
+        )
 
         # If the image is not centered, then whatever point is at the
         # center of the view should stay there, but the center of the
@@ -101,7 +107,15 @@ class TestZoom(unittest.TestCase):
         xform2 = xform * qt.QTransform.fromTranslate(10, 20)
         current_center = map_inv(xform2, *view_center)
 
-        self.assertEqual(map_inv(zoom(xform2, view, 0.5), *view_center), current_center)
-        self.assertEqual(map_inv(zoom(xform2, view, 2), *view_center), current_center)
-        self.assertEqual(map_inv(zoom(xform2, view, -1), *view_center), current_center)
-        self.assertEqual(map_inv(zoom(xform2, view, -3), *view_center), current_center)
+        self.assertEqual(
+            map_inv(zoom(xform2, view_center, 0.5), *view_center), current_center
+        )
+        self.assertEqual(
+            map_inv(zoom(xform2, view_center, 2), *view_center), current_center
+        )
+        self.assertEqual(
+            map_inv(zoom(xform2, view_center, -1), *view_center), current_center
+        )
+        self.assertEqual(
+            map_inv(zoom(xform2, view_center, -3), *view_center), current_center
+        )

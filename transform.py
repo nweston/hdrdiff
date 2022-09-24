@@ -47,9 +47,8 @@ def scale_factor(xform):
     return xform.m11()
 
 
-def zoom(xform, view_dims, increment):
+def zoom(xform, center, increment):
     """Adjust zoom level relative to the current scale."""
-    center = [i * 0.5 for i in view_dims]
     old_scale = scale_factor(xform)
     new_scale = zoom_to_scale(scale_to_zoom(old_scale) + increment)
     relative_scale = new_scale / old_scale
