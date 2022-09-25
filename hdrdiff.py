@@ -4,7 +4,7 @@ import sys
 import qt
 import numpy
 import transform
-from layout import HBox
+from layout import HBox, VBox
 
 
 def dims(obj):
@@ -95,21 +95,28 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     window = qt.QWidget()
     view = ImageView(qimage, parent=window)
-    HBox(window, children=[view])
+    info = qt.QLabel(parent=window)
+    HBox(window, margin=8, children=[view, VBox(children=[info])])
 
     # Shortcuts
-    qt.QShortcut(
-        qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_Equal), window, activated=view.zoom_in
-    )
-    qt.QShortcut(
-        qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_Plus), window, activated=view.zoom_in
-    )
-    qt.QShortcut(
-        qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_Minus), window, activated=view.zoom_out
-    )
-    qt.QShortcut(
-        qt.QKeySequence(qt.Qt.CTRL + qt.Qt.Key_0), window, activated=view.reset_view
-    )
+    shortcuts = [
+        (
+            "Zoom In",
+            view.zoom_in,
+            [qt.Qt.CTRL + qt.Qt.Key_Equal, qt.Qt.CTRL + qt.Qt.Key_Plus],
+        ),
+        ("Zoom Out", view.zoom_out, [qt.Qt.CTRL + qt.Qt.Key_Minus]),
+        ("Reset Zoom", view.reset_view, [qt.Qt.CTRL + qt.Qt.Key_0]),
+    ]
+    help_text = []
+    for description, slot, keys in shortcuts:
+        sequences = [qt.QKeySequence(k) for k in keys]
+        for s in sequences:
+            qt.QShortcut(s, window, activated=slot)
+        help_text.append(
+            ", ".join(s.toString() for s in sequences) + f": {description}"
+        )
+    info.setText("Shortcuts:\n" + "\n".join(help_text))
 
     # Run the app
     window.showMaximized()
