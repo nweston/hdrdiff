@@ -1,10 +1,9 @@
-import enable_exr  # noqa: F401
-import cv2
 import sys
 import qt
-import numpy
 import transform
 from layout import HBox, VBox
+from functools import partial
+from images import Images
 
 
 def dims(obj):
@@ -13,10 +12,10 @@ def dims(obj):
 
 
 class ImageView(qt.QGraphicsView):
-    def __init__(self, image, parent=None, **kwargs):
+    def __init__(self, images, parent=None, **kwargs):
         scene = qt.QGraphicsScene()
-        self._image = image
-        self._item = qt.QGraphicsPixmapItem(qt.QPixmap.fromImage(image))
+        self._image_dims = dims(images.qimage)
+        self._item = qt.QGraphicsPixmapItem(qt.QPixmap.fromImage(images.qimage))
         scene.addItem(self._item)
 
         super().__init__(scene=scene, parent=parent, **kwargs)
@@ -24,6 +23,9 @@ class ImageView(qt.QGraphicsView):
         self.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
         self.setMouseTracking(True)
+        images.imageChanged.connect(
+            lambda i: self._item.setPixmap(qt.QPixmap.fromImage(i))
+        )
 
         self._drag_state = None
 
@@ -65,7 +67,7 @@ class ImageView(qt.QGraphicsView):
         self.setCursor(qt.Qt.CursorShape.ArrowCursor)
 
     def reset_view(self):
-        self._transform = transform.fit(dims(self._image), dims(self.sceneRect()))
+        self._transform = transform.fit(self._image_dims, dims(self.sceneRect()))
 
     def zoom_in(self):
         self._transform = transform.zoom(
@@ -82,41 +84,54 @@ class ImageView(qt.QGraphicsView):
         )
 
 
-if __name__ == "__main__":
-    img = cv2.imread(sys.argv[1], cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+class Shortcut(qt.QObject):
+    activated = qt.Signal(str)
 
-    # Convert to 8-bit and add alpha channel to match QImage format
-    height, width = img.shape[:2]
-    bits = cv2.cvtColor(
-        (numpy.clip(img, 0, 1) * 255).astype(numpy.uint8), cv2.COLOR_BGR2BGRA
-    ).tobytes()
-    qimage = qt.QImage(bits, width, height, width * 4, qt.QImage.Format_RGB32)
+    def __init__(self, widget, description, slot, keys):
+        super().__init__()
+
+        self.activated.connect(slot)
+        sequences = [qt.QKeySequence(k) for k in keys]
+
+        self._shortcuts = [
+            qt.QShortcut(
+                s, widget, activated=partial(self.activated.emit, s.toString())
+            )
+            for s in sequences
+        ]
+        self.description = (
+            ", ".join(s.toString() for s in sequences) + f": {description}"
+        )
+
+
+if __name__ == "__main__":
 
     app = qt.QApplication([])
     window = qt.QWidget()
-    view = ImageView(qimage, parent=window)
+    images = Images(sys.argv[1])
+    view = ImageView(images, parent=window)
     info = qt.QLabel(parent=window)
     HBox(window, margin=8, children=[view, VBox(children=[info])])
 
     # Shortcuts
     shortcuts = [
-        (
-            "Zoom In",
-            view.zoom_in,
-            [qt.Qt.CTRL + qt.Qt.Key_Equal, qt.Qt.CTRL + qt.Qt.Key_Plus],
-        ),
-        ("Zoom Out", view.zoom_out, [qt.Qt.CTRL + qt.Qt.Key_Minus]),
-        ("Reset Zoom", view.reset_view, [qt.Qt.CTRL + qt.Qt.Key_0]),
+        Shortcut(window, *s)
+        for s in [
+            (
+                "Zoom In",
+                view.zoom_in,
+                [qt.Qt.CTRL + qt.Qt.Key_Equal, qt.Qt.CTRL + qt.Qt.Key_Plus],
+            ),
+            ("Zoom Out", view.zoom_out, [qt.Qt.CTRL + qt.Qt.Key_Minus]),
+            ("Reset Zoom", view.reset_view, [qt.Qt.CTRL + qt.Qt.Key_0]),
+            (
+                "Toggle Single-Channel View",
+                images.view_channel,
+                [qt.Qt.Key_R, qt.Qt.Key_G, qt.Qt.Key_B, qt.Qt.Key_A],
+            ),
+        ]
     ]
-    help_text = []
-    for description, slot, keys in shortcuts:
-        sequences = [qt.QKeySequence(k) for k in keys]
-        for s in sequences:
-            qt.QShortcut(s, window, activated=slot)
-        help_text.append(
-            ", ".join(s.toString() for s in sequences) + f": {description}"
-        )
-    info.setText("Shortcuts:\n" + "\n".join(help_text))
+    info.setText("Shortcuts:\n" + "\n".join(s.description for s in shortcuts))
 
     # Run the app
     window.showMaximized()
