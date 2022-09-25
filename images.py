@@ -33,18 +33,40 @@ class Images(qt.QObject):
             cv2.COLOR_BGR2BGRA,
         )
 
-        self.qimage = _qimage_from_rgba(self.cv_image)
         self._channel = None
+        self._scale = 1.0
+        self._offset = 0.0
+        self._update_image()
 
-    def _set_image(self, image):
-        self.qimage = image
-        self.imageChanged.emit(image)
+    def _update_image(self):
+        image = self.cv_image * self._scale + self._offset
+        if self._channel is None:
+            self.qimage = _qimage_from_rgba(image)
+        else:
+            index = "BGRA".index(self._channel)
+            self.qimage = _qimage_from_channel(image, index)
+        self.imageChanged.emit(self.qimage)
 
     def view_channel(self, name):
         if name == self._channel:
             self._channel = None
-            self._set_image(_qimage_from_rgba(self.cv_image))
+            self._update_image()
         else:
             self._channel = name
-            index = "BGRA".index(name)
-            self._set_image(_qimage_from_channel(self.cv_image, index))
+            self._update_image()
+
+    def set_scale(self, value):
+        self._scale = value
+        self._update_image()
+
+    def set_offset(self, value):
+        self._offset = value
+        self._update_image()
+
+    def normalize(self):
+        low = numpy.min(self.cv_image)
+        high = numpy.max(self.cv_image)
+        self._scale = 1.0 / (high - low)
+        self._offset = -1 * self._scale * low
+        self._update_image()
+        return self._scale, self._offset

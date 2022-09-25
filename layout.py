@@ -20,6 +20,11 @@ These provide several conveniences:
 import qt
 
 
+class Stretch:
+    def __init__(self, stretch):
+        self.stretch = stretch
+
+
 class EasyLayout:
     """Base class for layout helpers."""
 
@@ -34,6 +39,8 @@ class EasyLayout:
                 self.addWidget(c)
             elif isinstance(c, int):
                 self.addSpacing(c)
+            elif isinstance(c, Stretch):
+                self.addStretch(c.stretch)
             else:
                 self.addLayout(c)
 

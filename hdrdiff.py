@@ -1,7 +1,7 @@
 import sys
 import qt
 import transform
-from layout import HBox, VBox
+from layout import HBox, VBox, Stretch
 from functools import partial
 from images import Images
 
@@ -109,9 +109,50 @@ if __name__ == "__main__":
     app = qt.QApplication([])
     window = qt.QWidget()
     images = Images(sys.argv[1])
+
+    def set_number(slot, text):
+        try:
+            slot(float(text))
+        except ValueError:
+            pass
+
     view = ImageView(images, parent=window)
     info = qt.QLabel(parent=window)
-    HBox(window, margin=8, children=[view, VBox(children=[info])])
+    # Weird, keyword argument for connecting signals doesn't work here
+    scale = qt.QLineEdit("1.0", window)
+    scale.textChanged.connect(partial(set_number, images.set_scale))
+    offset = qt.QLineEdit("0.0")
+    offset.textChanged.connect(partial(set_number, images.set_offset))
+
+    def do_normalize():
+        s, o = images.normalize()
+        scale.setText(f"{s:g}")
+        offset.setText(f"{o:g}")
+
+    normalize = qt.QPushButton("Normalize", clicked=do_normalize)
+    HBox(
+        window,
+        margin=8,
+        children=[
+            VBox(
+                children=[
+                    view,
+                    HBox(
+                        children=[
+                            qt.QLabel("Scale"),
+                            scale,
+                            qt.QLabel("Offset"),
+                            offset,
+                            30,
+                            normalize,
+                            Stretch(3),
+                        ]
+                    ),
+                ]
+            ),
+            VBox(children=[info]),
+        ],
+    )
 
     # Shortcuts
     shortcuts = [
