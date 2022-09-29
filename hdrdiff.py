@@ -176,6 +176,7 @@ if __name__ == "__main__":
             ),
             ("View Left Image", lambda: images.select_image(0), [qt.Qt.Key_1]),
             ("View Right Image", lambda: images.select_image(1), [qt.Qt.Key_2]),
+            ("View Diff", lambda: images.select_image(2), [qt.Qt.Key_3]),
         ]
     ]
     info.setText("Shortcuts:\n" + "\n".join(s.description for s in shortcuts))

@@ -77,6 +77,8 @@ class Images(qt.QObject):
         super().__init__(**kwargs)
 
         self.cv_images = _pad_images([_read_image(f) for f in [file1, file2] if f])
+        if len(self.cv_images) == 2:
+            self.cv_images.append(numpy.abs(self.cv_images[0] - self.cv_images[1]))
 
         self._selected_image = 0
         self._channel = None
@@ -122,7 +124,7 @@ class Images(qt.QObject):
         return self._scale, self._offset
 
     def select_image(self, index):
-        if index not in (0, 1):
-            raise ValueError(f"Bad image index: {index}")
+        if index >= len(self.cv_images):
+            return
         self._selected_image = index
         self._update_image()
