@@ -8,7 +8,7 @@ def _qimage_from_rgba(image):
     # Convert to 8-bit to match QImage format
     height, width = image.shape[:2]
     bits = (numpy.clip(image, 0, 1) * 255).astype(numpy.uint8).tobytes()
-    return qt.QImage(bits, width, height, width * 4, qt.QImage.Format_RGB32)
+    return qt.QImage(bits, width, height, width * 4, qt.QImage.Format_RGB32).copy()
 
 
 def _qimage_from_channel(image, index):
@@ -19,7 +19,8 @@ def _qimage_from_channel(image, index):
     packed = numpy.array([channel, channel, channel, channel]).T
 
     bits = (numpy.clip(packed, 0, 1) * 255).astype(numpy.uint8).tobytes()
-    return qt.QImage(bits, width, height, width * 4, qt.QImage.Format_RGB32)
+    return qt.QImage(bits, width, height, width * 4, qt.QImage.Format_RGB32).copy()
+
 
 
 class Images(qt.QObject):
