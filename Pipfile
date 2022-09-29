@@ -12,6 +12,7 @@ ipython = "*"
 qt-py = "*"
 pyside2 = "*"
 opencv-python-headless = "*"
+openexr = "*"
 
 [requires]
 python_version = "3.8"

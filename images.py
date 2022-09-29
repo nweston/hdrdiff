@@ -2,6 +2,8 @@ import enable_exr  # noqa: F401
 import cv2
 import numpy
 import qt
+import OpenEXR
+import Imath
 
 
 def _qimage_from_rgba(image):
@@ -24,7 +26,25 @@ def _qimage_from_channel(image, index):
 
 def _read_image(filename):
     img = cv2.imread(filename, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
-    img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+    if img is None:
+        # OpenCV won't read single-channel EXRs, so use OpenEXR
+        # directly.
+        f = OpenEXR.InputFile(filename)
+        assert list(f.header()["channels"].keys()) == ["A"]
+        # Get the channel (assume it's alpha for now), and turn into a
+        # numpy array
+        window = f.header()["dataWindow"]
+        width = window.max.x - window.min.x + 1
+        height = window.max.y - window.min.y + 1
+        alpha = numpy.ndarray(
+            (height, width),
+            numpy.float32,
+            f.channel("A", Imath.PixelType(OpenEXR.FLOAT)),
+        )
+        # Convert to BGRA
+        return cv2.cvtColor(alpha, cv2.COLOR_GRAY2BGRA)
+    else:
+        img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
 
     if img.dtype == numpy.uint8:
         return (img / 255.0).astype(numpy.float32)
