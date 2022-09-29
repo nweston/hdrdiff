@@ -1,5 +1,7 @@
 import unittest
 import qt
+import numpy
+from images import Images
 from transform import fit, scale_factor, zoom
 
 
@@ -118,4 +120,16 @@ class TestZoom(unittest.TestCase):
         )
         self.assertEqual(
             map_inv(zoom(xform2, view_center, -3), *view_center), current_center
+        )
+
+
+class TestImageImport(unittest.TestCase):
+    def test_promote_to_rgba(self):
+        self.assertEqual(Images("test-images/256/rgb.exr").cv_images[0].shape[2], 4)
+        self.assertEqual(Images("test-images/256/alpha.exr").cv_images[0].shape[2], 4)
+
+    def test_promote_8bit_to_float(self):
+        self.assertEqual(
+            Images("test-images/256/8bit.png").cv_images[0].dtype,
+            numpy.dtype("float32"),
         )

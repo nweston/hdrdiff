@@ -22,25 +22,36 @@ def _qimage_from_channel(image, index):
     return qt.QImage(bits, width, height, width * 4, qt.QImage.Format_RGB32).copy()
 
 
+def _read_image(filename):
+    img = cv2.imread(filename, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+    img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+
+    if img.dtype == numpy.uint8:
+        return (img / 255.0).astype(numpy.float32)
+    else:
+        return img
+
 
 class Images(qt.QObject):
     imageChanged = qt.Signal(qt.QImage)
 
-    def __init__(self, filename, **kwargs):
+    def __init__(self, file1, file2=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.cv_image = cv2.cvtColor(
-            cv2.imread(filename, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH),
-            cv2.COLOR_BGR2BGRA,
-        )
+        self.cv_images = [_read_image(f) for f in [file1, file2] if f]
 
+        self._selected_image = 0
         self._channel = None
         self._scale = 1.0
         self._offset = 0.0
         self._update_image()
 
+    @property
+    def _cv_image(self):
+        return self.cv_images[self._selected_image]
+
     def _update_image(self):
-        image = self.cv_image * self._scale + self._offset
+        image = self._cv_image * self._scale + self._offset
         if self._channel is None:
             self.qimage = _qimage_from_rgba(image)
         else:
@@ -65,9 +76,15 @@ class Images(qt.QObject):
         self._update_image()
 
     def normalize(self):
-        low = numpy.min(self.cv_image)
-        high = numpy.max(self.cv_image)
+        low = min(numpy.min(i) for i in self.cv_images)
+        high = min(numpy.max(i) for i in self.cv_images)
         self._scale = 1.0 / (high - low)
         self._offset = -1 * self._scale * low
         self._update_image()
         return self._scale, self._offset
+
+    def select_image(self, index):
+        if index not in (0, 1):
+            raise ValueError(f"Bad image index: {index}")
+        self._selected_image = index
+        self._update_image()

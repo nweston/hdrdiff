@@ -1,4 +1,4 @@
-import sys
+import argparse
 import qt
 import transform
 from layout import HBox, VBox, Stretch
@@ -105,10 +105,14 @@ class Shortcut(qt.QObject):
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser()
+    parser.add_argument("file1")
+    parser.add_argument("file2", nargs="?")
+    args = parser.parse_args()
 
     app = qt.QApplication([])
     window = qt.QWidget()
-    images = Images(sys.argv[1])
+    images = Images(args.file1, args.file2)
 
     def set_number(slot, text):
         try:
@@ -170,6 +174,8 @@ if __name__ == "__main__":
                 images.view_channel,
                 [qt.Qt.Key_R, qt.Qt.Key_G, qt.Qt.Key_B, qt.Qt.Key_A],
             ),
+            ("View Left Image", lambda: images.select_image(0), [qt.Qt.Key_1]),
+            ("View Right Image", lambda: images.select_image(1), [qt.Qt.Key_2]),
         ]
     ]
     info.setText("Shortcuts:\n" + "\n".join(s.description for s in shortcuts))
