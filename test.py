@@ -133,3 +133,8 @@ class TestImageImport(unittest.TestCase):
             Images("test-images/256/8bit.png").cv_images[0].dtype,
             numpy.dtype("float32"),
         )
+
+    def test_add_borders_to_smaller_image(self):
+        images = Images("test-images/256/rgba.exr", "test-images/1920/rgba.exr")
+        self.assertEqual(images.cv_images[0].shape, (1275, 1920, 4))
+        self.assertEqual(images.cv_images[1].shape, (1275, 1920, 4))

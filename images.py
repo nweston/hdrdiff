@@ -52,13 +52,31 @@ def _read_image(filename):
         return img
 
 
+def _pad_images(images):
+    dims = (max(i.shape[0] for i in images), max(i.shape[1] for i in images))
+    return [
+        i
+        if i.shape[:2] == dims
+        else cv2.copyMakeBorder(
+            i,
+            bottom=dims[0] - i.shape[0],
+            top=0,
+            left=0,
+            right=dims[1] - i.shape[1],
+            borderType=cv2.BORDER_CONSTANT,
+            value=0,
+        )
+        for i in images
+    ]
+
+
 class Images(qt.QObject):
     imageChanged = qt.Signal(qt.QImage)
 
     def __init__(self, file1, file2=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.cv_images = [_read_image(f) for f in [file1, file2] if f]
+        self.cv_images = _pad_images([_read_image(f) for f in [file1, file2] if f])
 
         self._selected_image = 0
         self._channel = None
