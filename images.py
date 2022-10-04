@@ -82,16 +82,13 @@ class Images(qt.QObject):
 
         self._selected_image = 0
         self._channel = None
-        self._scale = 1.0
-        self._offset = 0.0
+        self._scale = [1.0] * len(self.cv_images)
+        self._offset = [0.0] * len(self.cv_images)
         self._update_image()
 
-    @property
-    def _cv_image(self):
-        return self.cv_images[self._selected_image]
-
     def _update_image(self):
-        image = self._cv_image * self._scale + self._offset
+        i = self._selected_image
+        image = self.cv_images[i] * self._scale[i] + self._offset[i]
         if self._channel is None:
             self.qimage = _qimage_from_rgba(image)
         else:
@@ -108,20 +105,32 @@ class Images(qt.QObject):
             self._update_image()
 
     def set_scale(self, value):
-        self._scale = value
+        self._scale[0] = self._scale[1] = value
         self._update_image()
 
     def set_offset(self, value):
-        self._offset = value
+        self._offset[0] = self._offset[1] = value
         self._update_image()
 
     def normalize(self):
         low = min(numpy.min(i) for i in self.cv_images)
         high = min(numpy.max(i) for i in self.cv_images)
-        self._scale = 1.0 / (high - low)
-        self._offset = -1 * self._scale * low
+        self._scale[0] = self._scale[1] = 1.0 / (high - low)
+        self._offset[0] = self._offset[1] = -1 * self._scale[0] * low
         self._update_image()
-        return self._scale, self._offset
+        return self._scale[0], self._offset[0]
+
+    def set_diff_scale(self, value):
+        self._scale[2] = value
+        self._update_image()
+
+    def normalize_diff(self):
+        if len(self.cv_images) < 3:
+            return 1.0
+
+        self._scale[2] = 1.0 / numpy.max(self.cv_images[2])
+        self._update_image()
+        return self._scale[2]
 
     def select_image(self, index):
         if index >= len(self.cv_images):

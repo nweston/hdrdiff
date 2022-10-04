@@ -134,6 +134,15 @@ if __name__ == "__main__":
         offset.setText(f"{o:g}")
 
     normalize = qt.QPushButton("Normalize", clicked=do_normalize)
+
+    diff_scale = qt.QLineEdit("1.0")
+    diff_scale.textChanged.connect(partial(set_number, images.set_diff_scale))
+
+    def do_normalize_diff():
+        diff_scale.setText(f"{images.normalize_diff():g}")
+
+    normalize_diff = qt.QPushButton("Normalize Diff", clicked=do_normalize_diff)
+
     HBox(
         window,
         margin=8,
@@ -149,6 +158,11 @@ if __name__ == "__main__":
                             offset,
                             30,
                             normalize,
+                            Stretch(2),
+                            qt.QLabel("Diff Scale"),
+                            diff_scale,
+                            30,
+                            normalize_diff,
                             Stretch(3),
                         ]
                     ),
@@ -177,6 +191,7 @@ if __name__ == "__main__":
             ("View Left Image", lambda: images.select_image(0), [qt.Qt.Key_1]),
             ("View Right Image", lambda: images.select_image(1), [qt.Qt.Key_2]),
             ("View Diff", lambda: images.select_image(2), [qt.Qt.Key_3]),
+            ("Normalize Diff", do_normalize_diff, [qt.Qt.Key_N]),
         ]
     ]
     info.setText("Shortcuts:\n" + "\n".join(s.description for s in shortcuts))
