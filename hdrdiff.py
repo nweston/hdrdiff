@@ -4,6 +4,7 @@ import transform
 from layout import HBox, VBox, Stretch
 from functools import partial
 from images import Images
+from numberwidget import NumberWidget
 
 
 def dims(obj):
@@ -158,34 +159,28 @@ if __name__ == "__main__":
     window = qt.QWidget()
     images = Images(args.file1, args.file2)
 
-    def set_number(slot, text):
-        try:
-            slot(float(text))
-        except ValueError:
-            pass
-
     image_info = qt.QLabel(parent=window)
     image_info.setTextFormat(qt.Qt.RichText)
     shortcut_info = qt.QLabel(parent=window)
     view = ImageView(images, parent=window)
     view.imageMouseOver.connect(lambda p: image_info.setText(info_text(p, images)))
-    scale = qt.QLineEdit("1.0", window)
-    scale.textChanged.connect(partial(set_number, images.set_scale))
-    offset = qt.QLineEdit("0.0")
-    offset.textChanged.connect(partial(set_number, images.set_offset))
+    scale = NumberWidget(1.0, min_value=0, parent=window)
+    scale.valueChanged.connect(images.set_scale)
+    offset = NumberWidget(0.0)
+    offset.valueChanged.connect(images.set_offset)
 
     def do_normalize():
         s, o = images.normalize()
-        scale.setText(f"{s:g}")
-        offset.setText(f"{o:g}")
+        scale.set_value(s)
+        offset.set_value(o)
 
     normalize = qt.QPushButton("Normalize", clicked=do_normalize)
 
-    diff_scale = qt.QLineEdit("1.0")
-    diff_scale.textChanged.connect(partial(set_number, images.set_diff_scale))
+    diff_scale = NumberWidget(1.0, min_value=0, parent=window)
+    diff_scale.valueChanged.connect(images.set_diff_scale)
 
     def do_normalize_diff():
-        diff_scale.setText(f"{images.normalize_diff():g}")
+        diff_scale.set_value(images.normalize_diff())
 
     normalize_diff = qt.QPushButton("Normalize Diff", clicked=do_normalize_diff)
 
