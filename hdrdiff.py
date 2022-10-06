@@ -12,6 +12,8 @@ def dims(obj):
 
 
 class ImageView(qt.QGraphicsView):
+    imageMouseOver = qt.Signal(qt.QPoint)
+
     def __init__(self, images, parent=None, **kwargs):
         scene = qt.QGraphicsScene()
         self._image_dims = dims(images.qimage)
@@ -26,6 +28,13 @@ class ImageView(qt.QGraphicsView):
         images.imageChanged.connect(
             lambda i: self._item.setPixmap(qt.QPixmap.fromImage(i))
         )
+        self._last_mouse_position = None
+
+        def update_mouseover():
+            if self._last_mouse_position:
+                self._emit_mouse_over(self._last_mouse_position)
+
+        images.imageChanged.connect(update_mouseover)
 
         self._drag_state = None
 
@@ -36,6 +45,9 @@ class ImageView(qt.QGraphicsView):
     @_transform.setter
     def _transform(self, t):
         self._item.setTransform(t)
+
+    def _emit_mouse_over(self, point):
+        self.imageMouseOver.emit(self._item.mapFromScene(point).toPoint())
 
     def resizeEvent(self, evt):
         super().resizeEvent(evt)
@@ -55,12 +67,15 @@ class ImageView(qt.QGraphicsView):
         )
 
     def mouseMoveEvent(self, evt):
+        self._last_mouse_position = evt.localPos()
         if evt.buttons() == qt.Qt.LeftButton:
             if self._drag_state is None:
                 self._drag_state = (self._transform, (evt.x(), evt.y()))
                 self.setCursor(qt.Qt.CursorShape.ClosedHandCursor)
             else:
                 self._transform = transform.pan(*self._drag_state, (evt.x(), evt.y()))
+        else:
+            self.imageMouseOver.emit(self._item.mapFromScene(evt.localPos()).toPoint())
 
     def mouseReleaseEvent(self, evt):
         self._drag_state = None
@@ -104,6 +119,35 @@ class Shortcut(qt.QObject):
         )
 
 
+def info_text(point, images):
+    x, y = point.x(), point.y()
+
+    def image_string(i):
+        selected = i == images.selected_image
+        try:
+            width, height = images.image_dims[i]
+            description = f": {width} x {height}, {images.descriptions[i]}"
+        except IndexError:
+            # No description for diff
+            description = ""
+        try:
+            pixel = images.cv_images[i][y][x]
+        except IndexError:
+            pixel = (0, 0, 0, 0)
+        return f"""{"<b>" if selected else ""}{images.image_names[i]}{description}
+R: {pixel[0]:g}
+G: {pixel[1]:g}
+B: {pixel[2]:g}
+A: {pixel[3]:g}
+{"</b>" if selected else ""}
+"""
+
+    return (
+        f"{x}, {y}\n\n"
+        + "\n\n".join(image_string(i) for i in range(len(images.cv_images)))
+    ).replace("\n", "<br>")
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file1")
@@ -120,9 +164,11 @@ if __name__ == "__main__":
         except ValueError:
             pass
 
+    image_info = qt.QLabel(parent=window)
+    image_info.setTextFormat(qt.Qt.RichText)
+    shortcut_info = qt.QLabel(parent=window)
     view = ImageView(images, parent=window)
-    info = qt.QLabel(parent=window)
-    # Weird, keyword argument for connecting signals doesn't work here
+    view.imageMouseOver.connect(lambda p: image_info.setText(info_text(p, images)))
     scale = qt.QLineEdit("1.0", window)
     scale.textChanged.connect(partial(set_number, images.set_scale))
     offset = qt.QLineEdit("0.0")
@@ -168,7 +214,7 @@ if __name__ == "__main__":
                     ),
                 ]
             ),
-            VBox(children=[info]),
+            VBox(children=[image_info, shortcut_info]),
         ],
     )
 
@@ -194,7 +240,7 @@ if __name__ == "__main__":
             ("Normalize Diff", do_normalize_diff, [qt.Qt.Key_N]),
         ]
     ]
-    info.setText("Shortcuts:\n" + "\n".join(s.description for s in shortcuts))
+    shortcut_info.setText("Shortcuts:\n" + "\n".join(s.description for s in shortcuts))
 
     # Run the app
     window.showMaximized()

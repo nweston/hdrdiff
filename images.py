@@ -4,6 +4,7 @@ import numpy
 import qt
 import OpenEXR
 import Imath
+import os.path
 
 
 def _qimage_from_rgba(image):
@@ -45,14 +46,17 @@ def _read_image(filename):
             f.channel("A", Imath.PixelType(OpenEXR.FLOAT)),
         )
         # Convert to BGRA
-        return cv2.cvtColor(alpha, cv2.COLOR_GRAY2BGRA)
-    else:
+        return cv2.cvtColor(alpha, cv2.COLOR_GRAY2BGRA), "A"
+    elif img.shape[2] == 3:
+        channels = "RGB"
         img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
+    else:
+        channels = "RGBA"
 
     if img.dtype == numpy.uint8:
-        return (img / 255.0).astype(numpy.float32)
+        return (img / 255.0).astype(numpy.float32), channels
     else:
-        return img
+        return img, channels
 
 
 def _pad_images(images):
@@ -79,9 +83,15 @@ class Images(qt.QObject):
     def __init__(self, file1, file2=None, **kwargs):
         super().__init__(**kwargs)
 
-        self.cv_images = _pad_images([_read_image(f) for f in [file1, file2] if f])
+        raw_images, self.descriptions = list(
+            zip(*[_read_image(f) for f in [file1, file2] if f])
+        )
+        self.image_dims = [(i.shape[1], i.shape[0]) for i in raw_images]
+        self.cv_images = _pad_images(raw_images)
+        self.image_names = [os.path.basename(file1)]
         if len(self.cv_images) == 2:
             self.cv_images.append(numpy.abs(self.cv_images[0] - self.cv_images[1]))
+            self.image_names.extend([os.path.basename(file2), "Diff"])
 
         self._selected_image = 0
         self._channel = None
@@ -140,3 +150,7 @@ class Images(qt.QObject):
             return
         self._selected_image = index
         self._update_image()
+
+    @property
+    def selected_image(self):
+        return self._selected_image
