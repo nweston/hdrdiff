@@ -25,7 +25,10 @@ def _qimage_from_channel(image, index):
 
 
 def _read_image(filename):
-    img = cv2.imread(filename, cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH)
+    img = cv2.imread(
+        filename,
+        cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH | cv2.IMREAD_UNCHANGED,
+    )
     if img is None:
         # OpenCV won't read single-channel EXRs, so use OpenEXR
         # directly.
