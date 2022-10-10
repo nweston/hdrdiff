@@ -165,11 +165,19 @@ if __name__ == "__main__":
     parser.add_argument(
         "-n", "--no-gui", help="Print diff information and exit.", action="store_true"
     )
+    parser.add_argument(
+        "-x",
+        "--exit-if-same",
+        help="Only show GUI if images differ.",
+        action="store_true",
+    )
     args = parser.parse_args()
 
     images = Images(args.file1, args.file2)
     if args.no_gui:
         sys.exit(console_diff(images))
+    if args.exit_if_same and images.has_diff and images.max_diff == 0:
+        sys.exit(0)
 
     app = qt.QApplication([])
     window = qt.QWidget()
