@@ -1,4 +1,5 @@
 import argparse
+import sys
 import qt
 import transform
 from layout import HBox, VBox, Stretch
@@ -149,15 +150,29 @@ A: {pixel[3]:g}
     ).replace("\n", "<br>")
 
 
+def console_diff(images):
+    if not images.has_diff or images.max_diff == 0:
+        return 0
+
+    print(f"Maximum diff: {images.max_diff}")
+    return 1
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file1")
     parser.add_argument("file2", nargs="?")
+    parser.add_argument(
+        "-n", "--no-gui", help="Print diff information and exit.", action="store_true"
+    )
     args = parser.parse_args()
+
+    images = Images(args.file1, args.file2)
+    if args.no_gui:
+        sys.exit(console_diff(images))
 
     app = qt.QApplication([])
     window = qt.QWidget()
-    images = Images(args.file1, args.file2)
 
     image_info = qt.QLabel(parent=window)
     image_info.setTextFormat(qt.Qt.RichText)

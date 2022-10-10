@@ -141,7 +141,7 @@ class Images(qt.QObject):
         if len(self.cv_images) < 3:
             return 1.0
 
-        self._scale[2] = 1.0 / numpy.max(self.cv_images[2])
+        self._scale[2] = 1.0 / self.max_diff
         self._update_image()
         return self._scale[2]
 
@@ -154,3 +154,11 @@ class Images(qt.QObject):
     @property
     def selected_image(self):
         return self._selected_image
+
+    @property
+    def max_diff(self):
+        return numpy.max(self.cv_images[2])
+
+    @property
+    def has_diff(self):
+        return len(self.cv_images) == 3
