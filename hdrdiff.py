@@ -130,8 +130,8 @@ def info_text(point, images):
             width, height = images.image_dims[i]
             description = f": {width} x {height}, {images.descriptions[i]}"
         except IndexError:
-            # No description for diff
-            description = ""
+            # No dims for diff
+            description = f": {images.descriptions[i]}"
         try:
             pixel = images.cv_images[i][y][x]
         except IndexError:

@@ -92,6 +92,7 @@ class Images(qt.QObject):
         if len(self.cv_images) == 2:
             self.cv_images.append(numpy.abs(self.cv_images[0] - self.cv_images[1]))
             self.image_names.extend([os.path.basename(file2), "Diff"])
+            self.descriptions += (f"max {self.max_diff:g}",)
 
         self._selected_image = 0
         self._channel = None
