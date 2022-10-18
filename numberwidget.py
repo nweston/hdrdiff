@@ -28,6 +28,10 @@ class NumberWidget(qt.QLineEdit):
         self._value = start_value
         self.setText(f"{self._value:g}")
 
+    @property
+    def value(self):
+        return self._value
+
     def set_value(self, value):
         value = round(value, self.DECIMALS)
         if self._min is not None:

@@ -197,7 +197,12 @@ if __name__ == "__main__":
         scale.set_value(s)
         offset.set_value(o)
 
+    def do_reset():
+        scale.set_value(1.0)
+        offset.set_value(0.0)
+
     normalize = qt.QPushButton("Normalize", clicked=do_normalize)
+    reset = qt.QPushButton("Reset", clicked=do_reset)
 
     diff_scale = NumberWidget(1.0, min_value=0, parent=window)
     diff_scale.valueChanged.connect(images.set_diff_scale)
@@ -205,7 +210,11 @@ if __name__ == "__main__":
     def do_normalize_diff():
         diff_scale.set_value(images.normalize_diff())
 
+    def do_reset_diff():
+        diff_scale.set_value(1.0)
+
     normalize_diff = qt.QPushButton("Normalize Diff", clicked=do_normalize_diff)
+    reset_diff = qt.QPushButton("Reset Diff", clicked=do_reset_diff)
 
     HBox(
         window,
@@ -222,11 +231,13 @@ if __name__ == "__main__":
                             offset,
                             30,
                             normalize,
+                            reset,
                             Stretch(2),
                             qt.QLabel("Diff Scale"),
                             diff_scale,
                             30,
                             normalize_diff,
+                            reset_diff,
                             Stretch(3),
                         ]
                     ),
@@ -235,6 +246,18 @@ if __name__ == "__main__":
             VBox(children=[image_info, shortcut_info]),
         ],
     )
+
+    def toggle_normalize():
+        if images.selected_image == 2:
+            if diff_scale.value == 1.0:
+                do_normalize_diff()
+            else:
+                do_reset_diff()
+        else:
+            if scale.value == 1.0 and offset.value == 0.0:
+                do_normalize()
+            else:
+                do_reset()
 
     # Shortcuts
     shortcuts = [
@@ -255,7 +278,7 @@ if __name__ == "__main__":
             ("View Left Image", lambda: images.select_image(0), [qt.Qt.Key_1]),
             ("View Right Image", lambda: images.select_image(1), [qt.Qt.Key_2]),
             ("View Diff", lambda: images.select_image(2), [qt.Qt.Key_3]),
-            ("Normalize Diff", do_normalize_diff, [qt.Qt.Key_N]),
+            ("Normalize/Reset", toggle_normalize, [qt.Qt.Key_N]),
         ]
     ]
     shortcut_info.setText("Shortcuts:\n" + "\n".join(s.description for s in shortcuts))
