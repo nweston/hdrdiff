@@ -128,7 +128,7 @@ class Images(qt.QObject):
 
     def normalize(self):
         low = min(numpy.min(i) for i in self.cv_images)
-        high = min(numpy.max(i) for i in self.cv_images)
+        high = max(numpy.max(i) for i in self.cv_images)
         self._scale[0] = self._scale[1] = 1.0 / (high - low)
         self._offset[0] = self._offset[1] = -1 * self._scale[0] * low
         self._update_image()
