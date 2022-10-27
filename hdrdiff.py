@@ -22,7 +22,8 @@ class ImageView(qt.QGraphicsView):
         self._item = qt.QGraphicsPixmapItem(qt.QPixmap.fromImage(images.qimage))
         scene.addItem(self._item)
 
-        super().__init__(scene=scene, parent=parent, **kwargs)
+        super().__init__(parent=parent, **kwargs)
+        self.setScene(scene)
         self.setBackgroundBrush(qt.Qt.gray)
         self.setVerticalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)
         self.setHorizontalScrollBarPolicy(qt.Qt.ScrollBarAlwaysOff)

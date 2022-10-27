@@ -33,7 +33,7 @@ class EasyLayout:
 
         Children may be QWidgets or QLayouts."""
 
-        self.setMargin(margin)
+        self.setContentsMargins(margin, margin, margin, margin)
         for c in children:
             if isinstance(c, qt.QWidget):
                 self.addWidget(c)

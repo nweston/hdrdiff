@@ -9,10 +9,10 @@ black = "*"
 ipython = "*"
 
 [packages]
-qt-py = "*"
-pyside2 = "*"
+qtpy = "*"
 opencv-python-headless = "*"
 openexr = "*"
+pyqt5 = "*"
 
 [requires]
 python_version = "3.8"
