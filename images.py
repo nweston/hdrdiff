@@ -96,8 +96,8 @@ class Images(qt.QObject):
 
         self._selected_image = 0
         self._channel = None
-        self._scale = [1.0] * len(self.cv_images)
-        self._offset = [0.0] * len(self.cv_images)
+        self._scale = [1.0] * 3
+        self._offset = [0.0] * 3
         self._update_image()
 
     def _update_image(self):
