@@ -138,9 +138,9 @@ def info_text(point, images):
         except IndexError:
             pixel = (0, 0, 0, 0)
         return f"""{"<b>" if selected else ""}{images.image_names[i]}{description}
-R: {pixel[0]:g}
+R: {pixel[2]:g}
 G: {pixel[1]:g}
-B: {pixel[2]:g}
+B: {pixel[0]:g}
 A: {pixel[3]:g}
 {"</b>" if selected else ""}
 """
