@@ -14,4 +14,4 @@ else
     export QT_API=pyqt5
 fi
 
-python ${BASEDIR}/hdrdiff.py $*
+python ${BASEDIR}/hdrdiff.py "$@"
