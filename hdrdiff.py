@@ -280,6 +280,7 @@ if __name__ == "__main__":
             ("View Right Image", lambda: images.select_image(1), [qt.Qt.Key_2]),
             ("View Diff", lambda: images.select_image(2), [qt.Qt.Key_3]),
             ("Normalize/Reset", toggle_normalize, [qt.Qt.Key_N]),
+            ("Quit", window.close, [qt.Qt.Key_Q]),
         ]
     ]
     shortcut_info.setText("Shortcuts:\n" + "\n".join(s.description for s in shortcuts))
