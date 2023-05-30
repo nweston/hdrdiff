@@ -13,6 +13,18 @@ def dims(obj):
     return obj.width(), obj.height()
 
 
+def position(evt):
+    """Position of an event (e.g. QMouseEvent).
+
+    Compatibility shim for PyQt 5/6."""
+    try:
+        # Qt 5
+        return evt.localPos()
+    except AttributeError:
+        # Qt 6
+        return evt.position()
+
+
 class ImageView(qt.QGraphicsView):
     imageMouseOver = qt.Signal(qt.QPoint)
 
@@ -65,20 +77,25 @@ class ImageView(qt.QGraphicsView):
         # Delta of one wheel click is usually 120
         self._transform = transform.zoom(
             self._transform,
-            center=(evt.x(), evt.y()),
+            center=(position(evt).x(), position(evt).y()),
             increment=evt.angleDelta().y() / 240.0,
         )
 
     def mouseMoveEvent(self, evt):
-        self._last_mouse_position = evt.localPos()
+        self._last_mouse_position = position(evt)
         if evt.buttons() == qt.Qt.LeftButton:
             if self._drag_state is None:
-                self._drag_state = (self._transform, (evt.x(), evt.y()))
+                self._drag_state = (
+                    self._transform,
+                    (position(evt).x(), position(evt).y()),
+                )
                 self.setCursor(qt.Qt.CursorShape.ClosedHandCursor)
             else:
-                self._transform = transform.pan(*self._drag_state, (evt.x(), evt.y()))
+                self._transform = transform.pan(
+                    *self._drag_state, (position(evt).x(), position(evt).y())
+                )
         else:
-            self.imageMouseOver.emit(self._item.mapFromScene(evt.localPos()).toPoint())
+            self.imageMouseOver.emit(self._item.mapFromScene(position(evt)).toPoint())
 
     def mouseReleaseEvent(self, evt):
         self._drag_state = None
@@ -267,10 +284,10 @@ if __name__ == "__main__":
             (
                 "Zoom In",
                 view.zoom_in,
-                [qt.Qt.CTRL + qt.Qt.Key_Equal, qt.Qt.CTRL + qt.Qt.Key_Plus],
+                [qt.Qt.CTRL | qt.Qt.Key_Equal, qt.Qt.CTRL | qt.Qt.Key_Plus],
             ),
-            ("Zoom Out", view.zoom_out, [qt.Qt.CTRL + qt.Qt.Key_Minus]),
-            ("Reset Zoom", view.reset_view, [qt.Qt.CTRL + qt.Qt.Key_0]),
+            ("Zoom Out", view.zoom_out, [qt.Qt.CTRL | qt.Qt.Key_Minus]),
+            ("Reset Zoom", view.reset_view, [qt.Qt.CTRL | qt.Qt.Key_0]),
             (
                 "Toggle Single-Channel View",
                 images.view_channel,
