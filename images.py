@@ -31,7 +31,7 @@ def _read_image(filename):
         cv2.IMREAD_ANYCOLOR | cv2.IMREAD_ANYDEPTH | cv2.IMREAD_UNCHANGED,
     )
     if img is None:
-        # OpenCV won't read single-channel EXRs, so use OpenEXR
+        # OpenCV won't read alpha-only EXRs, so use OpenEXR
         # directly.
         f = OpenEXR.InputFile(filename)
         assert list(f.header()["channels"].keys()) == ["A"]
@@ -47,6 +47,10 @@ def _read_image(filename):
         )
         # Convert to BGRA
         return cv2.cvtColor(alpha, cv2.COLOR_GRAY2BGRA), "A"
+    elif len(img.shape) == 2:
+        # A luma-only EXR (Y channel), is read as a 2D array
+        channels = "A"
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGRA)
     elif img.shape[2] == 3:
         channels = "RGB"
         img = cv2.cvtColor(img, cv2.COLOR_BGR2BGRA)
