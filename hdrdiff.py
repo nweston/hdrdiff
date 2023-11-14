@@ -146,15 +146,16 @@ def info_text(point, images):
         selected = i == images.selected_image
         try:
             width, height = images.image_dims[i]
-            description = f": {width} x {height}, {images.descriptions[i]}"
+            description = f"{width} x {height}, {images.descriptions[i]}"
         except IndexError:
             # No dims for diff
-            description = f": {images.descriptions[i]}"
+            description = f"{images.descriptions[i]}"
         try:
             pixel = images.cv_images[i][y][x]
         except IndexError:
             pixel = (0, 0, 0, 0)
-        return f"""{"<b>" if selected else ""}{images.image_names[i]}{description}
+        return f"""{"<b>" if selected else ""}{images.image_names[i]}
+&nbsp;&nbsp;{description}
 R: {pixel[2]:g}
 G: {pixel[1]:g}
 B: {pixel[0]:g}
@@ -202,6 +203,10 @@ if __name__ == "__main__":
 
     image_info = qt.QLabel(parent=window)
     image_info.setTextFormat(qt.Qt.RichText)
+    # Prevent layout from wobbling as label contents change. Fixed
+    # width is not ideal, but good enough for now.
+    image_info.setFixedWidth(200)
+    image_info.setWordWrap(True)
     shortcut_info = qt.QLabel(parent=window)
     view = ImageView(images, parent=window)
     view.imageMouseOver.connect(lambda p: image_info.setText(info_text(p, images)))
