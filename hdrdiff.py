@@ -62,7 +62,11 @@ class ImageView(qt.QGraphicsView):
         self._item.setTransform(t)
 
     def _emit_mouse_over(self, point):
-        self.imageMouseOver.emit(self._item.mapFromScene(point).toPoint())
+        mapped = self._item.mapFromScene(point)
+        # QPointF.toPoint() rounds to nearest integer which is not
+        # helpful if we're using the result as pixel
+        # coordinates. Truncate the coordinates instead.
+        self.imageMouseOver.emit(qt.QPoint(int(mapped.x()), int(mapped.y())))
 
     def resizeEvent(self, evt):
         super().resizeEvent(evt)
@@ -95,7 +99,7 @@ class ImageView(qt.QGraphicsView):
                     *self._drag_state, (position(evt).x(), position(evt).y())
                 )
         else:
-            self.imageMouseOver.emit(self._item.mapFromScene(position(evt)).toPoint())
+            self._emit_mouse_over(position(evt))
 
     def mouseReleaseEvent(self, evt):
         self._drag_state = None
