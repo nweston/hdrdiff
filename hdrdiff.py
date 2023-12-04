@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 import qt
 import transform
@@ -181,6 +182,15 @@ def console_diff(images):
     return 1
 
 
+def get_file2(args):
+    # With hdrdiff <file> <dir>, look for a matching filename in the
+    # directory (like normal diff)
+    if args.file2 and os.path.isdir(args.file2):
+        return os.path.join(args.file2, os.path.basename(args.file1))
+    else:
+        return args.file2
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("file1")
@@ -196,7 +206,7 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    images = Images(args.file1, args.file2)
+    images = Images(args.file1, get_file2(args))
     if args.no_gui:
         sys.exit(console_diff(images))
     if args.exit_if_same and images.has_diff and images.max_diff == 0:
