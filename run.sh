@@ -8,10 +8,4 @@ BASEDIR=$(dirname $(realpath $0))
 # this the hard way to avoid the annoying delay.
 . ${BASEDIR}/.venv/bin/activate
 
-if [ $(uname) == "Darwin" ]; then
-    export QT_API=pyqt6
-else
-    export QT_API=pyqt5
-fi
-
 python ${BASEDIR}/hdrdiff.py "$@"
